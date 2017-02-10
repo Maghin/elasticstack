@@ -1,0 +1,50 @@
+version: '2'
+services:
+  elasticsearch:
+    image: elasticsearch:5.2
+    environment:
+    - cluster.name=merhylstudio-cluster
+    - bootstrap.memory_lock=true
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    mem_limit: 1024000000
+    cap_add:
+    - IPC_LOCK
+    volumes:
+    - elasticsearch-data:/usr/share/elasticsearch/data
+
+  logstash:
+    image: logstash:5.2
+    command: -f /etc/logstash/conf.d
+    mem_limit: 1024000000
+    ports:
+    - "5140:5140/tcp"
+    - "5140:5140/udp"
+    - "5044:5044/tcp"
+    volumes:
+    - logstash-etc:/etc/logstash
+    links:
+    - elasticsearch
+
+  kibana:
+    image: kibana:5.2
+    links:
+    - elasticsearch
+
+  proxy:
+    image: elk_proxy
+    links:
+    - kibana
+    ports:
+    - "5443:443"
+
+  cron:
+    image: elk_cron
+    links:
+    - elasticsearch
+
+volumes:
+  logstash-etc:
+    driver: local
+  elasticsearch-data:
+    dirver: local
+
